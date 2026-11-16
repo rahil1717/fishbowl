@@ -658,9 +658,16 @@ async function addSlip(){
   var text=(el?el.value:'').trim().slice(0,60);
   if(!text)return;
   if(mySlips().length>=st().settings.perPlayer)return;
+  var norm=function(x){return String(x).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'');};
+  if(mySlips().some(function(x){return norm(x.text)===norm(text);})){toast('You already added that one.');return;}
   el.value='';G.draft.slipin='';
   var r=await sb.from('slips').insert({room_code:G.code,player_id:G.me.id,text:text}).select('id,player_id,text').single();
-  if(r.error){toast('Could not save that slip. Try again.');el.value=text;G.draft.slipin=text;return;}
+  if(r.error){
+    el.value=text;G.draft.slipin=text;
+    toast(r.error.code==='23505'?'Someone already wrote that one. Try another.':'Could not save that slip. Try again.');
+    G.focusId='slipin';paint(true);
+    return;
+  }
   G.slips.push(r.data);
   G.focusId='slipin';paint(true);
 }

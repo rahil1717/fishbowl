@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fishbowl Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one phone-width column per player, each on their own device. Deep aquarium water, paper slips, goldfish-orange as the single accent. */
+:root{
+  --deep:#06202d;
+  --water:#0c3a50;
+  --glass:#14607f;
+  --ink:#eaf6fb;
+  --mute:#9cc0d0;
+  --gold:#ff8a2b;
+  --gold-dark:#b9560b;
+  --gold-ink:#2b1200;
+  --paper:#f6efd2;
+  --paper-ink:#1d1a10;
+  --line:rgba(255,255,255,.16);
+  --panel:rgba(4,22,32,.55);
+  --font-display:"Bagel Fat One","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:radial-gradient(120% 70% at 50% -10%,var(--glass) 0%,var(--water) 40%,var(--deep) 100%) fixed;
+  background-color:var(--deep);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.4;
+  -webkit-tap-highlight-color:transparent;
+}
+#app{
+  position:relative;z-index:1;min-height:100%;max-width:520px;margin:0 auto;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  display:flex;flex-direction:column;gap:16px;
+}
+h1,h2,h3,p{margin:0}
+h1,h2{font-family:var(--font-display);font-weight:400;text-wrap:balance;line-height:1.05}
+h1{font-size:2.6rem}
+h2{font-size:1.5rem}
+.eyebrow{font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.sub{color:var(--mute)}
+small{color:var(--mute);display:block;font-size:.85rem}
+em.empty{color:var(--mute);font-style:normal;font-size:.95rem}
+.err{color:#ffb9a3;font-weight:600}
+
+.bubbles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bubbles span{position:absolute;bottom:-40px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.18),transparent 60%);animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-115vh)}}
+@media (prefers-reduced-motion:reduce){.bubbles span{animation:none;bottom:20%}}
+
+.btn{
+  font:inherit;font-weight:700;border:0;border-radius:16px;padding:14px 20px;min-height:52px;
+  background:var(--gold);color:var(--gold-ink);cursor:pointer;
+  box-shadow:0 4px 0 var(--gold-dark);transition:transform .08s,box-shadow .08s;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--gold-dark)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.btn.ghost:active{transform:translateY(2px)}
+.btn.big{font-family:var(--font-display);font-weight:400;font-size:1.7rem;min-height:88px;border-radius:24px}
+.btn.small{min-height:44px;padding:8px 16px;font-size:.95rem}
+.link{font:inherit;background:none;border:0;color:var(--mute);text-decoration:underline;cursor:pointer;padding:12px;align-self:center}
+:focus-visible{outline:3px solid #fff;outline-offset:2px}
+input[type=text]{
+  font:inherit;width:100%;min-height:52px;padding:12px 14px;border-radius:14px;
+  background:rgba(0,0,0,.28);border:2px solid var(--line);color:var(--ink);
+}
+input[type=text]::placeholder{color:#7fa5b6}
+input[type=text]:focus{border-color:var(--gold);outline:none}
+input[type=text]:disabled{opacity:.5}
+.code-in{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-weight:700}
+.inline{display:flex;gap:10px}
+.inline .btn{flex:none}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{font:inherit;font-size:1.4rem;font-weight:700;width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.stepper button:active{background:rgba(255,255,255,.1)}
+.stepper output{min-width:64px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.switch{width:56px;height:32px;border-radius:999px;border:2px solid var(--line);background:rgba(0,0,0,.28);position:relative;cursor:pointer;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--mute);transition:transform .15s}
+.switch[aria-checked=true]{background:var(--gold);border-color:var(--gold)}
+.switch[aria-checked=true]::after{transform:translateX(24px);background:var(--gold-ink)}
+.switch:disabled{opacity:.5;cursor:default}
+.settings-read{display:flex;flex-wrap:wrap;gap:8px}
+.settings-read span{background:rgba(255,255,255,.09);border-radius:999px;padding:6px 12px;font-size:.9rem;font-weight:600}
+
+.roomcode{font-family:var(--font-display);font-size:4rem;letter-spacing:.16em;text-align:center;line-height:1;padding-left:.16em}
+.team{border-left:6px solid var(--tc);background:var(--panel);border-radius:6px 18px 18px 6px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.team h3{font-family:var(--font-display);font-weight:400;font-size:1.2rem;display:flex;justify-content:space-between;color:var(--tc)}
+.team h3 span{color:var(--mute);font-family:var(--font-body);font-size:.95rem;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;background:rgba(255,255,255,.09);border-radius:999px;overflow:hidden;min-height:44px}
+.chip button{font:inherit;color:var(--ink);background:none;border:0;cursor:pointer;min-height:44px}
+.chip button:first-child{padding:0 6px 0 14px;font-weight:600}
+.chip .x{padding:0 14px 0 8px;color:var(--mute);font-size:1.2rem}
+.chip .nm{padding:0 14px;font-weight:600}
+.chip .tag{color:var(--mute);font-size:.8rem;font-weight:700;margin-left:6px}
+
+.prow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0}
+.state{font-size:.8rem;font-weight:700;border-radius:999px;padding:4px 10px;background:rgba(255,255,255,.1);color:var(--mute)}
+.state.ok{background:var(--gold);color:var(--gold-ink)}
+
+.score{display:flex;gap:8px}
+.score div{flex:1;background:var(--panel);border-top:4px solid var(--tc);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;align-items:center}
+.score span{font-size:.8rem;color:var(--mute);font-weight:600}
+.score b{font-family:var(--font-display);font-weight:400;font-size:1.8rem;font-variant-numeric:tabular-nums;line-height:1.1}
+
+.hero{display:flex;flex-direction:column;gap:6px;padding-top:6px}
+.stage{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;padding:28px 12px}
+.stage .label{color:var(--tc);font-weight:700;font-size:1.1rem}
+.stage .name{font-size:3.4rem;word-break:break-word}
+.brand{display:flex;align-items:center;gap:14px}
+.rule{font-size:1.2rem}
+.spacer{flex:1}
+
+.turnhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{background:rgba(255,255,255,.1);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:700}
+.who{font-weight:700;color:var(--tc)}
+.clock{display:flex;flex-direction:column;gap:8px;align-items:center}
+.clock .num{font-family:var(--font-display);font-size:4.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.clock .num.low{color:var(--gold)}
+.bar{width:100%;height:10px;border-radius:999px;background:rgba(0,0,0,.35);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--tc);border-radius:999px}
+.slip{
+  background:var(--paper);color:var(--paper-ink);border-radius:6px;padding:28px 22px;min-height:190px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  background-image:linear-gradient(transparent 35px,rgba(40,70,120,.14) 36px);background-size:100% 36px;
+  box-shadow:0 14px 30px rgba(0,0,0,.35);transform:rotate(-1.2deg);
+}
+.slip p{font-family:var(--font-display);font-size:2.4rem;line-height:1.15;word-break:break-word}
+.slip p.m{font-size:1.9rem}
+.slip p.s{font-size:1.45rem}
+.slip.paused{background-color:#cfc9ae;color:#5a5640}
+.slip.watch{background-color:#d9d3b4}
+.tally{text-align:center;color:var(--mute);font-variant-numeric:tabular-nums}
+.actions{display:flex;flex-direction:column;gap:12px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);color:var(--paper-ink);border-radius:8px;padding:10px 12px;font-weight:600}
+.item button{font:inherit;font-size:.9rem;font-weight:700;color:#7a2a00;background:none;border:0;cursor:pointer;min-height:44px;padding:0 6px}
+.table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.table th,.table td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+.table th:first-child,.table td:first-child{text-align:left}
+.table th{font-size:.8rem;color:var(--mute);font-weight:700}
+.table tfoot td{font-weight:700;font-size:1.1rem;border-bottom:0}
+.win{color:var(--gold)}
+
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--deep);padding:10px 16px;border-radius:999px;font-weight:700;z-index:5;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+.toast.on{opacity:1}
+.netbad{background:#5a2a12;border:1px solid var(--gold);border-radius:12px;padding:8px 12px;font-weight:600;text-align:center}
+</style>
+</head>
+<body>
+<div class="bubbles" aria-hidden="true">
+  <span style="left:8%;width:18px;height:18px;animation-duration:19s;animation-delay:-3s"></span>
+  <span style="left:22%;width:30px;height:30px;animation-duration:26s;animation-delay:-11s"></span>
+  <span style="left:41%;width:12px;height:12px;animation-duration:17s;animation-delay:-6s"></span>
+  <span style="left:58%;width:24px;height:24px;animation-duration:23s;animation-delay:-15s"></span>
+  <span style="left:73%;width:16px;height:16px;animation-duration:20s;animation-delay:-1s"></span>
+  <span style="left:89%;width:34px;height:34px;animation-duration:29s;animation-delay:-9s"></span>
+</div>
+<main id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- config ---------- */
+var SB_URL='https://pijcyfrphkbohrkbzdww.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpamN5ZnJwaGtib2hya2J6ZHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MjM4NjksImV4cCI6MjExMDM5OTg2OX0.cWxO5Ks3DyisQRNQ_-UYc52CBYvqBF5iG5LNEbhGAOc';
+var TEAM_NAMES=['Goldfish','Guppies','Piranhas','Pufferfish'];
+var TEAM_COLORS=['#ff8a2b','#4fd1c5','#ff7eb6','#ffd23f'];
+var ROUNDS=[
+  {n:1,name:'Describe',rule:'Describe the slip to your team using any words except the ones written on it. No spelling it out and no "sounds like".'},
+  {n:2,name:'One word',rule:'One word per slip, and only one. You have seen every slip by now, so pick the word that unlocks it. No gestures and no sounds.'},
+  {n:3,name:'Charades',rule:'No words at all. Act each slip out in silence. Your team can shout as many guesses as they like.'}
+];
+var LIMITS={teams:[2,4,1],perPlayer:[1,6,1],seconds:[15,120,15]};
+var LETTERS='BCDFGHJKMNPQRSTVWXZ';
+
+var app=document.getElementById('app');
+var sb=null;
+try{sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});}catch(e){sb=null;}
+
+/* ---------- small helpers ---------- */
+function uid(){
+  try{if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();}catch(e){}
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});
+}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function emptyScores(){return [[0,0,0,0],[0,0,0,0],[0,0,0,0]];}
+function randCode(){var c='';for(var i=0;i<4;i++)c+=LETTERS.charAt(Math.floor(Math.random()*LETTERS.length));return c;}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}}
+
+var toastTimer=null;
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('on');},2600);
+}
+
+/* ---------- sound ---------- */
+var ac=null;
+function unlockAudio(){
+  try{
+    if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended')ac.resume();
+  }catch(e){}
+}
+document.addEventListener('pointerdown',unlockAudio,{once:true});
+function tone(f,d){
+  try{
+    unlockAudio();if(!ac)return;
+    var o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;
+    o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,n);
+    g.gain.exponentialRampToValueAtTime(0.25,n+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,n+d);
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(n+d+0.02);
+  }catch(e){}
+}
+function buzz(){try{if(navigator.vibrate)navigator.vibrate([200,80,200]);}catch(e){}}
+var lock=null;
+function takeLock(){try{if(navigator.wakeLock){navigator.wakeLock.request('screen').then(function(l){lock=l;}).catch(function(){});}}catch(e){}}
+function releaseLock(){try{if(lock){lock.release();lock=null;}}catch(e){}}
+
+/* ---------- state ---------- */
+var G={
+  view:'home',          // home | room
+  code:null,
+  me:{id:null,name:lsGet('fishbowl2-name')||''},
+  room:null,            // {version,state}
+  players:[],
+  slips:[],
+  offset:0,
+  pushing:false,dirty:false,
+  online:true,
+  err:'',busy:false,
+  draft:{nameIn:lsGet('fishbowl2-name')||'',codeIn:'',slipin:''},
+  ch:null,
+  lastSig:'',lastPhase:null,lastSec:null,focusId:null,
+  savedRoom:null
+};
+try{var sr=JSON.parse(lsGet('fishbowl2-room')||'null');if(sr&&sr.code&&sr.id)G.savedRoom=sr;}catch(e){}
+var urlRoom=(function(){try{var c=(new URLSearchParams(location.search).get('room')||'').toUpperCase();return /^[A-Z]{4}$/.test(c)?c:'';}catch(e){return '';}})();
+if(urlRoom)G.draft.codeIn=urlRoom;
+
+/* ---------- selectors ---------- */
+function st(){return G.room.state;}
+function isHost(){return st().hostId===G.me.id;}
+function iAmGiver(){return st().giver===G.me.id;}
+function canAct(){return iAmGiver()||isHost();}
+function playerById(id){return G.players.find(function(p){return p.id===id;});}
+function teamPlayers(t){return G.players.filter(function(p){return p.team===t;});}
+function slipById(id){return G.slips.find(function(s){return s.id===id;});}
+function mySlips(){return G.slips.filter(function(s){return s.player_id===G.me.id;});}
+function nowS(){return Date.now()+G.offset;}
+function total(t){return st().scores.reduce(function(a,r){return a+r[t];},0);}
+function giverName(){var p=playerById(st().giver);return p?p.name:'Someone';}
+function myTeam(){var p=playerById(G.me.id);return p?p.team:0;}
+function canStart(){
+  var s=st();
+  if(G.players.length<2)return false;
+  for(var t=0;t<s.settings.teams;t++){if(teamPlayers(t).length<1)return false;}
+  return true;
+}
+function computeGiver(s){
+  var list=teamPlayers(s.turnTeam);
+  if(!list.length)return null;
+  return list[s.ptr[s.turnTeam]%list.length].id;
+}
+function advance(s){
+  s.ptr[s.turnTeam]++;
+  s.turnTeam=(s.turnTeam+1)%s.settings.teams;
+  s.giver=computeGiver(s);
+}
+function slipText(id){var s=slipById(id);return s&&s.text!=null?s.text:null;}
+
+/* ---------- networking ---------- */
+async function syncTime(){
+  try{
+    var t0=Date.now();
+    var r=await sb.rpc('server_time_ms');
+    var t1=Date.now();
+    if(!r.error&&r.data!=null)G.offset=Number(r.data)-(t0+t1)/2;
+  }catch(e){}
+}
+
+async function fetchSlips(){
+  var s=G.room.state,full=!(s.phase==='lobby'||s.phase==='entry');
+  var qs=[sb.from('slips').select(full?'id,player_id,text':'id,player_id').eq('room_code',G.code)];
+  if(!full)qs.push(sb.from('slips').select('id,player_id,text').eq('room_code',G.code).eq('player_id',G.me.id));
+  var out=await Promise.all(qs);
+  for(var i=0;i<out.length;i++){if(out[i].error)return null;}
+  var list=out[0].data;
+  if(!full){
+    var map={};out[1].data.forEach(function(m){map[m.id]=m;});
+    list=list.map(function(x){return map[x.id]||x;});
+  }
+  return list.sort(function(a,b){return a.id<b.id?-1:1;});
+}
+
+var refreshing=false,refreshAgain=false;
+async function refresh(force){
+  if(!G.code||!sb)return;
+  if(refreshing){refreshAgain=true;return;}
+  refreshing=true;
+  try{
+    var rp=await Promise.all([
+      sb.from('rooms').select('version,state').eq('code',G.code).maybeSingle(),
+      sb.from('players').select('id,name,team,ready,joined_at').eq('room_code',G.code).order('joined_at').order('id')
+    ]);
+    var r=rp[0],p=rp[1];
+    if(r.error||p.error){setOnline(false);return;}
+    setOnline(true);
+    if(!r.data){leaveRoom('That room no longer exists.');return;}
+    G.players=p.data;
+    if(!playerById(G.me.id)){leaveRoom('You are no longer in that room.');return;}
+    if(force||(!G.pushing&&!G.dirty&&r.data.version>=G.room.version)){G.room=r.data;}
+    var sl=await fetchSlips();
+    if(sl)G.slips=sl;
+    paint();
+  }catch(e){setOnline(false);}
+  finally{
+    refreshing=false;
+    if(refreshAgain){refreshAgain=false;refresh();}
+  }
+}
+var rtimer=null;
+function scheduleRefresh(){clearTimeout(rtimer);rtimer=setTimeout(function(){refresh();},120);}
+function setOnline(v){if(G.online!==v){G.online=v;paint(true);}}
+
+function subscribe(){
+  unsubscribe();
+  var ch=sb.channel('fb-'+G.code);
+  [['rooms','code=eq.'+G.code],['players','room_code=eq.'+G.code],['slips','room_code=eq.'+G.code]].forEach(function(x){
+    ch.on('postgres_changes',{event:'*',schema:'public',table:x[0],filter:x[1]},scheduleRefresh);
+  });
+  ch.subscribe();
+  G.ch=ch;
+}
+function unsubscribe(){try{if(G.ch){sb.removeChannel(G.ch);}}catch(e){}G.ch=null;}
+
+/* write the local room state to the server, one write at a time */
+function mutate(fn){
+  var s=JSON.parse(JSON.stringify(st()));
+  if(fn(s)===false)return;
+  G.room={version:G.room.version,state:s};
+  G.dirty=true;
+  paint(true);
+  pump();
+}
+async function pump(){
+  if(G.pushing)return;
+  G.pushing=true;
+  while(G.dirty){
+    G.dirty=false;
+    var snap=G.room.state,v=G.room.version;
+    var res;
+    try{
+      res=await sb.from('rooms').update({state:snap,version:v+1,updated_at:new Date().toISOString()}).eq('code',G.code).eq('version',v).select('version');
+    }catch(e){res={error:e};}
+    if(res.error){
+      G.dirty=true;G.pushing=false;setOnline(false);
+      setTimeout(pump,1500);return;
+    }
+    if(!res.data||!res.data.length){
+      G.dirty=false;G.pushing=false;
+      await refresh(true);
+      toast('Synced with the room');
+      return;
+    }
+    setOnline(true);
+    G.room={version:v+1,state:G.room.state};
+  }
+  G.pushing=false;
+  scheduleRefresh();
+}
+
+async function patchPlayer(id,fields){
+  var r=await sb.from('players').update(fields).eq('id',id);
+  if(r.error)toast('Could not save that change.');
+  refresh();
+}
+
+/* ---------- room entry and exit ---------- */
+function saveRoom(){lsSet('fishbowl2-room',JSON.stringify({code:G.code,id:G.me.id,name:G.me.name}));}
+async function enterRoom(code,pid,name){
+  G.code=code;G.me={id:pid,name:name};G.draft.slipin='';
+  saveRoom();lsSet('fishbowl2-name',name);
+  G.view='room';G.lastSig='';G.lastPhase=null;
+  G.room={version:-1,state:{phase:'lobby',settings:{teams:2,perPlayer:3,seconds:60,allowSkip:true},scores:emptyScores(),deck:[],ptr:[0,0,0,0],turnTeam:0}};
+  G.players=[];G.slips=[];
+  await syncTime();
+  await refresh(true);
+  if(G.view==='room'){subscribe();paint(true);}
+}
+function leaveRoom(msg){
+  unsubscribe();releaseLock();
+  G.view='home';G.code=null;G.room=null;G.players=[];G.slips=[];G.savedRoom=null;G.pushing=false;G.dirty=false;
+  lsSet('fishbowl2-room',null);
+  G.err=msg||'';
+  paint(true);
+}
+function readName(){
+  var n=(G.draft.nameIn||'').trim().replace(/\s+/g,' ').slice(0,20);
+  return n;
+}
+async function createRoom(){
+  var name=readName();
+  if(!name){G.err='Enter your name first.';paint(true);return;}
+  if(!sb){G.err='Could not load the game server. Check your connection and reload.';paint(true);return;}
+  G.busy=true;G.err='';paint(true);
+  var state={hostId:null,settings:{teams:2,perPlayer:3,seconds:60,allowSkip:true},phase:'lobby',round:1,deck:[],scores:emptyScores(),turnTeam:0,ptr:[0,0,0,0],carry:null,giver:null,turn:null};
+  var pid=uid();state.hostId=pid;
+  try{sb.rpc('purge_old_rooms').then(function(){},function(){});}catch(e){}
+  var code=null,lastErr=null;
+  for(var i=0;i<6&&!code;i++){
+    var c=randCode();
+    var r=await sb.from('rooms').insert({code:c,state:state});
+    if(!r.error)code=c;else{lastErr=r.error;if(r.error.code!=='23505')break;}
+  }
+  if(!code){G.busy=false;G.err='Could not create a room. '+(lastErr&&lastErr.message?lastErr.message:'');paint(true);return;}
+  var pr=await sb.from('players').insert({id:pid,room_code:code,name:name,team:0});
+  if(pr.error){G.busy=false;G.err='Could not join your own room. Try again.';paint(true);return;}
+  G.busy=false;
+  await enterRoom(code,pid,name);
+}
+async function joinRoom(){
+  var name=readName();
+  var code=(G.draft.codeIn||'').trim().toUpperCase();
+  if(!name){G.err='Enter your name first.';paint(true);return;}
+  if(!/^[A-Z]{4}$/.test(code)){G.err='Room codes are 4 letters.';paint(true);return;}
+  if(!sb){G.err='Could not load the game server. Check your connection and reload.';paint(true);return;}
+  G.busy=true;G.err='';paint(true);
+  var r=await sb.from('rooms').select('version,state').eq('code',code).maybeSingle();
+  if(r.error||!r.data){G.busy=false;G.err=r.error?'Could not reach the room. Try again.':'No room with that code.';paint(true);return;}
+  var pl=await sb.from('players').select('id,name,team').eq('room_code',code);
+  if(pl.error){G.busy=false;G.err='Could not reach the room. Try again.';paint(true);return;}
+  var existing=pl.data.find(function(p){return p.name.toLowerCase()===name.toLowerCase();});
+  var pid;
+  if(existing){pid=existing.id;}
+  else{
+    if(r.data.state.phase!=='lobby'){G.busy=false;G.err='That game has already started. To get back in, use the exact name you joined with.';paint(true);return;}
+    var n=r.data.state.settings.teams,counts=[];
+    for(var t=0;t<n;t++)counts.push(pl.data.filter(function(p){return p.team===t;}).length);
+    var team=counts.indexOf(Math.min.apply(null,counts));
+    pid=uid();
+    var ins=await sb.from('players').insert({id:pid,room_code:code,name:name,team:team});
+    if(ins.error){G.busy=false;G.err='Could not join. Try again.';paint(true);return;}
+  }
+  G.busy=false;
+  await enterRoom(code,pid,name);
+}
+
+/* ---------- game actions ---------- */
+function finishTurn(s,reason){
+  var t=s.turn;
+  t.left=t.paused?Math.max(0,t.pauseLeft/1000):Math.max(0,(t.endsAt-nowS())/1000);
+  t.reason=reason;
+  if(reason==='time'&&s.deck.length>1){
+    var cur=s.deck.shift();
+    s.deck.splice(Math.floor(Math.random()*(s.deck.length+1)),0,cur);
+  }
+  s.phase='turnend';
+}
+function endTurn(reason){mutate(function(s){if(s.phase!=='turn'||!s.turn)return false;finishTurn(s,reason);});}
+
+var actions={
+  create:createRoom,
+  join:joinRoom,
+  rejoin:function(){
+    var sr=G.savedRoom;if(!sr)return;
+    G.busy=true;paint(true);
+    enterRoom(sr.code,sr.id,sr.name).then(function(){G.busy=false;});
+  },
+  forget:function(){G.savedRoom=null;lsSet('fishbowl2-room',null);paint(true);},
+  leave:function(){leaveRoom('');},
+  share:function(){
+    var url=location.origin+location.pathname+'?room='+G.code;
+    var text='Join my Fishbowl game. Room '+G.code;
+    if(navigator.share){navigator.share({title:'Fishbowl Night',text:text,url:url}).catch(function(){});return;}
+    try{navigator.clipboard.writeText(url).then(function(){toast('Invite link copied');},function(){toast('Copy the link shown below');});}
+    catch(e){toast('Copy the link shown below');}
+  },
+
+  /* lobby (host) */
+  cycle:function(d){
+    if(!isHost())return;
+    var p=playerById(d.id);if(!p)return;
+    patchPlayer(p.id,{team:(p.team+1)%st().settings.teams});
+  },
+  rmplayer:function(d){
+    if(!isHost()||d.id===G.me.id)return;
+    sb.from('players').delete().eq('id',d.id).then(function(){refresh();});
+  },
+  shuffleteams:function(){
+    if(!isHost())return;
+    var n=st().settings.teams;
+    Promise.all(shuffle(G.players).map(function(p,i){return sb.from('players').update({team:i%n}).eq('id',p.id);})).then(function(){refresh();});
+  },
+  step:function(d){
+    if(!isHost())return;
+    var k=d.k,lim=LIMITS[k];
+    mutate(function(s){
+      var v=Math.max(lim[0],Math.min(lim[1],s.settings[k]+Number(d.d)*lim[2]));
+      if(v===s.settings[k])return false;
+      s.settings[k]=v;
+      if(k==='teams'){
+        G.players.filter(function(p){return p.team>=v;}).forEach(function(p){patchPlayer(p.id,{team:p.team%v});});
+      }
+    });
+  },
+  toggleskip:function(){if(isHost())mutate(function(s){s.settings.allowSkip=!s.settings.allowSkip;});},
+  startgame:function(){
+    if(!isHost()||!canStart())return;
+    mutate(function(s){s.phase='entry';});
+  },
+
+  /* entry */
+  addslip:addSlip,
+  rmslip:function(d){
+    G.slips=G.slips.filter(function(s){return s.id!==d.id;});
+    G.focusId='slipin';paint(true);
+    sb.from('slips').delete().eq('id',d.id).then(function(){refresh();});
+  },
+  imdone:function(){
+    if(mySlips().length<st().settings.perPlayer)return;
+    var me=playerById(G.me.id);if(me)me.ready=true;paint(true);
+    patchPlayer(G.me.id,{ready:true});
+  },
+  editslips:function(){
+    var me=playerById(G.me.id);if(me)me.ready=false;paint(true);
+    patchPlayer(G.me.id,{ready:false});
+  },
+  fillbowl:function(){
+    if(!isHost())return;
+    if(!G.players.every(function(p){return p.ready;}))return;
+    mutate(function(s){
+      s.deck=shuffle(G.slips.map(function(x){return x.id;}));
+      s.round=1;s.scores=emptyScores();s.turnTeam=0;s.ptr=[0,0,0,0];s.carry=null;s.turn=null;
+      s.giver=computeGiver(s);s.phase='rules';
+    });
+  },
+
+  /* play */
+  tointro:function(){if(isHost())mutate(function(s){s.phase='turnintro';});},
+  startturn:function(){
+    if(!canAct())return;
+    unlockAudio();
+    mutate(function(s){
+      if(s.phase!=='turnintro')return false;
+      var secs=s.carry||s.settings.seconds;
+      s.turn={endsAt:nowS()+secs*1000,total:secs*1000,got:[],paused:false,pauseLeft:0};
+      s.carry=null;s.phase='turn';
+    });
+  },
+  got:function(){
+    if(!iAmGiver())return;
+    tone(740,0.08);
+    mutate(function(s){
+      if(s.phase!=='turn'||s.turn.paused||!s.deck.length)return false;
+      var id=s.deck.shift();
+      s.turn.got.push(id);s.scores[s.round-1][s.turnTeam]++;
+      if(!s.deck.length)finishTurn(s,'empty');
+    });
+  },
+  skip:function(){
+    if(!iAmGiver())return;
+    mutate(function(s){
+      if(s.phase!=='turn'||s.turn.paused||s.deck.length<2||!s.settings.allowSkip)return false;
+      s.deck.push(s.deck.shift());
+    });
+  },
+  pause:function(){
+    if(!iAmGiver())return;
+    mutate(function(s){
+      if(s.phase!=='turn'||s.turn.paused)return false;
+      s.turn.pauseLeft=Math.max(0,s.turn.endsAt-nowS());s.turn.paused=true;
+    });
+  },
+  resume:function(){
+    if(!iAmGiver())return;
+    mutate(function(s){
+      if(s.phase!=='turn'||!s.turn.paused)return false;
+      s.turn.endsAt=nowS()+s.turn.pauseLeft;s.turn.paused=false;
+    });
+  },
+  hostend:function(){if(isHost())endTurn('time');},
+  undo:function(d){
+    if(!canAct())return;
+    mutate(function(s){
+      if(s.phase!=='turnend')return false;
+      var i=s.turn.got.indexOf(d.id);if(i<0)return false;
+      s.turn.got.splice(i,1);s.deck.unshift(d.id);s.scores[s.round-1][s.turnTeam]--;
+    });
+  },
+  turnnext:function(){
+    if(!canAct())return;
+    mutate(function(s){
+      if(s.phase!=='turnend')return false;
+      if(!s.deck.length){
+        var left=s.turn.left;
+        s.carry=left>=1?Math.floor(left):null;
+        if(!s.carry)advance(s);
+        s.phase='roundend';
+      }else{
+        advance(s);s.phase='turnintro';
+      }
+      s.turn=null;
+    });
+  },
+  nextround:function(){
+    if(!isHost())return;
+    mutate(function(s){
+      if(s.round<3){s.round++;s.deck=shuffle(G.slips.map(function(x){return x.id;}));s.phase='rules';}
+      else{s.phase='final';s.carry=null;}
+    });
+  },
+  again:function(){
+    if(!isHost())return;
+    mutate(function(s){
+      s.scores=emptyScores();s.round=1;s.carry=null;s.turn=null;
+      s.deck=shuffle(G.slips.map(function(x){return x.id;}));s.phase='rules';
+    });
+  },
+  newgame:function(){
+    if(!isHost())return;
+    sb.from('slips').delete().eq('room_code',G.code).then(function(){
+      return sb.from('players').update({ready:false}).eq('room_code',G.code);
+    }).then(function(){
+      G.slips=[];
+      mutate(function(s){
+        s.phase='lobby';s.round=1;s.deck=[];s.scores=emptyScores();s.turnTeam=0;s.ptr=[0,0,0,0];s.carry=null;s.giver=null;s.turn=null;
+      });
+    });
+  }
+};
+
+async function addSlip(){
+  var el=document.getElementById('slipin');
+  var text=(el?el.value:'').trim().slice(0,60);
+  if(!text)return;
+  if(mySlips().length>=st().settings.perPlayer)return;
+  el.value='';G.draft.slipin='';
+  var r=await sb.from('slips').insert({room_code:G.code,player_id:G.me.id,text:text}).select('id,player_id,text').single();
+  if(r.error){toast('Could not save that slip. Try again.');el.value=text;G.draft.slipin=text;return;}
+  G.slips.push(r.data);
+  G.focusId='slipin';paint(true);
+}
+
+/* ---------- views ---------- */
+var LOGO='<svg viewBox="0 0 120 120" width="84" height="84" aria-hidden="true">'+
+  '<path d="M28 36 Q8 54 12 76 Q18 110 60 110 Q102 110 108 76 Q112 54 92 36 Z" fill="rgba(79,209,197,.22)" stroke="#eaf6fb" stroke-width="4" stroke-linejoin="round"/>'+
+  '<path d="M24 38 H96" stroke="#eaf6fb" stroke-width="5" stroke-linecap="round"/>'+
+  '<ellipse cx="56" cy="80" rx="17" ry="10" fill="#ff8a2b"/><path d="M71 80 L90 68 L90 92 Z" fill="#ff8a2b"/><circle cx="48" cy="77" r="2.6" fill="#2b1200"/>'+
+  '<rect x="64" y="52" width="24" height="15" rx="2" fill="#f6efd2" transform="rotate(-14 76 60)"/>'+
+  '<rect x="30" y="58" width="20" height="13" rx="2" fill="#f6efd2" transform="rotate(10 40 64)"/></svg>';
+
+function scoreStrip(){
+  var s=st(),h='';
+  for(var t=0;t<s.settings.teams;t++){
+    h+='<div style="--tc:'+TEAM_COLORS[t]+'"><span>'+TEAM_NAMES[t]+'</span><b>'+total(t)+'</b></div>';
+  }
+  return '<div class="score" aria-label="Scores">'+h+'</div>';
+}
+function leaveLink(){return '<button class="link" data-a="leave">Leave room</button>';}
+function waitNote(text){return '<p class="sub" style="text-align:center">'+text+'</p>';}
+function stepper(label,key,val,suffix,hint){
+  return '<div class="row"><div><b>'+label+'</b>'+(hint?'<small>'+hint+'</small>':'')+'</div>'+
+    '<div class="stepper"><button data-a="step" data-k="'+key+'" data-d="-1" aria-label="Fewer: '+label+'">&minus;</button>'+
+    '<output>'+val+(suffix||'')+'</output>'+
+    '<button data-a="step" data-k="'+key+'" data-d="1" aria-label="More: '+label+'">+</button></div></div>';
+}
+
+function vHome(){
+  var sr=G.savedRoom;
+  return '<div class="brand">'+LOGO+'<div class="hero"><p class="eyebrow">One phone each</p><h1>Fishbowl Night</h1></div></div>'+
+    (sr?'<div class="card"><p>You were in room <b>'+esc(sr.code)+'</b> as '+esc(sr.name)+'.</p>'+
+      '<div class="inline"><button class="btn" style="flex:1" data-a="rejoin" '+(G.busy?'disabled':'')+'>Back to the room</button><button class="btn ghost" data-a="forget">Forget</button></div></div>':'')+
+    '<div class="card"><label for="nameIn"><b>Your name</b></label>'+
+    '<input type="text" id="nameIn" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="What your friends call you" value="'+esc(G.draft.nameIn)+'"></div>'+
+    '<button class="btn big" data-a="create" '+(G.busy?'disabled':'')+'>Create a room</button>'+
+    '<div class="card"><label for="codeIn"><b>Or join a friend\'s room</b></label>'+
+    '<div class="inline"><input type="text" id="codeIn" class="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="CODE" value="'+esc(G.draft.codeIn)+'">'+
+    '<button class="btn" data-a="join" '+(G.busy?'disabled':'')+'>Join</button></div></div>'+
+    (G.err?'<p class="err" role="alert">'+esc(G.err)+'</p>':'')+
+    (G.busy?'<p class="sub" style="text-align:center">Connecting&hellip;</p>':'');
+}
+
+function vLobby(){
+  var s=st(),host=isHost(),url=location.origin+location.pathname+'?room='+G.code;
+  var hostP=playerById(s.hostId);
+  var teamsHtml='';
+  for(var t=0;t<s.settings.teams;t++){
+    var ps=teamPlayers(t);
+    var chips=ps.map(function(p){
+      var you=p.id===G.me.id?'<span class="tag">you</span>':'';
+      if(host){
+        return '<span class="chip"><button data-a="cycle" data-id="'+p.id+'" aria-label="Move '+esc(p.name)+' to the next team">'+esc(p.name)+you+'</button>'+
+          (p.id!==G.me.id?'<button class="x" data-a="rmplayer" data-id="'+p.id+'" aria-label="Remove '+esc(p.name)+'">&times;</button>':'<span style="width:10px"></span>')+'</span>';
+      }
+      return '<span class="chip"><span class="nm">'+esc(p.name)+you+'</span></span>';
+    }).join('')||'<em class="empty">No one yet</em>';
+    teamsHtml+='<section class="team" style="--tc:'+TEAM_COLORS[t]+'"><h3>'+TEAM_NAMES[t]+'<span>'+ps.length+'</span></h3><div class="chips">'+chips+'</div></section>';
+  }
+  var settingsHtml=host?
+    '<div class="card">'+
+      stepper('Teams','teams',s.settings.teams,'')+
+      stepper('Slips per player','perPlayer',s.settings.perPlayer,'')+
+      stepper('Seconds per turn','seconds',s.settings.seconds,'s')+
+      '<div class="row"><div><b>Allow skipping</b><small>A skipped slip goes back into the bowl</small></div>'+
+      '<button class="switch" role="switch" aria-checked="'+s.settings.allowSkip+'" aria-label="Allow skipping" data-a="toggleskip"></button></div>'+
+    '</div>':
+    '<div class="card"><p class="sub">Game settings</p><div class="settings-read"><span>'+s.settings.teams+' teams</span><span>'+s.settings.perPlayer+' slips each</span><span>'+s.settings.seconds+'s turns</span><span>'+(s.settings.allowSkip?'Skipping on':'No skipping')+'</span></div></div>';
+  var hint=!canStart()?(G.players.length<2?'You need at least two players.':'Every team needs at least one player.'):
+    (host?'Tap a name to move it to the next team.':'');
+  return '<div class="hero"><p class="eyebrow">Room code</p></div>'+
+    '<div class="card"><div class="roomcode" aria-label="Room code '+G.code.split('').join(' ')+'">'+G.code+'</div>'+
+    '<button class="btn" data-a="share">Share invite</button>'+
+    '<p class="sub" style="text-align:center;font-size:.85rem;word-break:break-all">'+esc(url)+'</p></div>'+
+    teamsHtml+
+    (host?'<div class="inline"><button class="btn ghost small" data-a="shuffleteams" '+(G.players.length<2?'disabled':'')+'>Shuffle teams</button></div>':'')+
+    (hint?'<p class="sub">'+hint+'</p>':'')+
+    settingsHtml+'<div class="spacer"></div>'+
+    (host?'<button class="btn big" data-a="startgame" '+(canStart()?'':'disabled')+'>Everyone is in</button>':
+      waitNote('Waiting for '+esc(hostP?hostP.name:'the host')+' to start.'))+
+    leaveLink();
+}
+
+function vEntry(){
+  var s=st(),per=s.settings.perPlayer,mine=mySlips(),me=playerById(G.me.id);
+  var ready=me&&me.ready,done=mine.length>=per;
+  var items=mine.map(function(x){
+    return '<div class="item"><span>'+esc(x.text||'')+'</span>'+(ready?'':'<button data-a="rmslip" data-id="'+x.id+'" aria-label="Remove slip">Remove</button>')+'</div>';
+  }).join('');
+  var status=G.players.map(function(p){
+    return '<div class="prow"><span>'+esc(p.name)+(p.id===G.me.id?' <small style="display:inline">(you)</small>':'')+'</span><span class="state'+(p.ready?' ok':'')+'">'+(p.ready?'Done':'Writing')+'</span></div>';
+  }).join('');
+  var allReady=G.players.length>0&&G.players.every(function(p){return p.ready;});
+  var top;
+  if(!ready){
+    top='<div class="hero"><p class="eyebrow">Write your slips</p><h2>'+mine.length+' of '+per+' written</h2><p class="sub">Names, places, characters, phrases. Anything a friend could guess. Nobody else sees your slips.</p></div>'+
+      '<div class="inline"><input type="text" id="slipin" placeholder="'+(done?'All written':'A name, a thing, a phrase')+'" maxlength="60" autocomplete="off" value="'+esc(G.draft.slipin)+'" '+(done?'disabled':'')+'>'+
+      '<button class="btn" data-a="addslip" '+(done?'disabled':'')+'>Add</button></div>'+
+      '<div class="list">'+items+'</div>'+
+      '<button class="btn" data-a="imdone" '+(done?'':'disabled')+'>I am done</button>';
+  }else{
+    top='<div class="hero"><p class="eyebrow">Your slips are in</p><h2>Waiting for the others</h2></div>'+
+      '<div class="list">'+items+'</div>'+
+      '<button class="btn ghost small" data-a="editslips">Change my slips</button>';
+  }
+  var bottom=isHost()?
+    '<button class="btn big" data-a="fillbowl" '+(allReady?'':'disabled')+'>Fill the bowl</button>':
+    (allReady?waitNote('Waiting for '+esc(playerById(s.hostId)?playerById(s.hostId).name:'the host')+' to fill the bowl.'):'');
+  return top+'<div class="card">'+status+'</div><div class="spacer"></div>'+bottom+leaveLink();
+}
+
+function vRules(){
+  var s=st(),r=ROUNDS[s.round-1];
+  return '<div class="hero"><p class="eyebrow">Round '+r.n+' of 3</p><h1>'+r.name+'</h1></div>'+
+    '<div class="card"><p class="rule">'+r.rule+'</p>'+
+    '<p class="sub">'+s.deck.length+' slips in the bowl. '+(s.settings.allowSkip?'Skipping sends a slip back into the bowl.':'No skipping this game.')+'</p></div>'+
+    scoreStrip()+'<div class="spacer"></div>'+
+    (isHost()?'<button class="btn big" data-a="tointro">Start round '+r.n+'</button>':waitNote('Waiting for the host to start the round.'))+leaveLink();
+}
+
+function vIntro(){
+  var s=st(),t=s.turnTeam,secs=s.carry||s.settings.seconds,mine=iAmGiver();
+  var btn;
+  if(mine)btn='<button class="btn big" data-a="startturn">Start the clock</button>';
+  else if(isHost())btn='<button class="btn ghost" data-a="startturn">Start the clock for '+esc(giverName())+'</button>';
+  else btn=waitNote('Waiting for '+esc(giverName())+' to start the clock.');
+  return '<div class="stage" style="--tc:'+TEAM_COLORS[t]+'"><p class="eyebrow">Round '+s.round+' &middot; '+ROUNDS[s.round-1].name+'</p>'+
+    '<p class="label">'+TEAM_NAMES[t]+' are up</p><h1 class="name">'+(mine?'You':esc(giverName()))+'</h1>'+
+    '<p class="sub">'+(s.carry?'Carried over from the last round: '+secs+' seconds.':secs+' seconds on the clock.')+(mine?' Keep your screen to yourself.':'')+'</p></div>'+
+    scoreStrip()+'<div class="spacer"></div>'+btn+leaveLink();
+}
+
+function vTurn(){
+  var s=st(),t=s.turn,col=TEAM_COLORS[s.turnTeam];
+  var leftMs=t.paused?t.pauseLeft:Math.max(0,t.endsAt-nowS());
+  var secs=Math.ceil(leftMs/1000),pct=Math.min(100,leftMs/t.total*100);
+  var head='<div class="turnhead" style="--tc:'+col+'"><span class="pill">Round '+s.round+' &middot; '+ROUNDS[s.round-1].name+'</span><span class="who">'+(iAmGiver()?'You':esc(giverName()))+'</span></div>'+
+    '<div class="clock" style="--tc:'+col+'"><div class="num'+(secs<=10?' low':'')+'" id="tnum">'+secs+'</div><div class="bar"><i id="tbar" style="width:'+pct+'%"></i></div></div>';
+  var tally='<p class="tally">'+s.deck.length+' left in the bowl &middot; '+t.got.length+' guessed this turn</p>';
+  if(iAmGiver()){
+    var txt=slipText(s.deck[0]);
+    var len=txt?txt.length:0,cls=len>38?'s':(len>18?'m':'');
+    var card=t.paused?'<div class="slip paused"><p class="m">Paused</p></div>':
+      '<div class="slip"><p class="'+cls+'">'+(txt!=null?esc(txt):'&hellip;')+'</p></div>';
+    var acts=t.paused?'<button class="btn big" data-a="resume">Resume</button>':
+      '<button class="btn big" data-a="got">Got it</button>'+
+      '<div class="inline">'+(s.settings.allowSkip&&s.deck.length>1?'<button class="btn ghost" style="flex:1" data-a="skip">Skip</button>':'')+
+      '<button class="btn ghost" style="flex:1" data-a="pause">Pause</button></div>';
+    return head+card+tally+'<div class="spacer"></div><div class="actions">'+acts+'</div>';
+  }
+  var same=myTeam()===s.turnTeam;
+  var msg=t.paused?'Paused':(same?'Your team is guessing. Shout your answers.':'Other team\'s turn. Watch for rule breaks.');
+  return head+'<div class="slip watch"><p class="m">'+msg+'</p></div>'+tally+'<div class="spacer"></div>'+
+    (isHost()?'<button class="btn ghost small" data-a="hostend">End this turn</button>':'');
+}
+
+function vTurnEnd(){
+  var s=st(),t=s.turn,empty=s.deck.length===0,can=canAct();
+  var list=t.got.map(function(id){
+    var tx=slipText(id);
+    return '<div class="item"><span>'+esc(tx!=null?tx:'…')+'</span>'+(can?'<button data-a="undo" data-id="'+id+'">Not guessed</button>':'')+'</div>';
+  }).join('')||'<em class="empty">Nothing guessed this turn.</em>';
+  var who=iAmGiver()?'You got':esc(giverName())+' got';
+  return '<div class="hero"><p class="eyebrow">'+(empty?'The bowl is empty':'Time is up')+'</p>'+
+    '<h1>'+t.got.length+(t.got.length===1?' slip':' slips')+'</h1>'+
+    '<p class="sub">'+who+' '+t.got.length+' for the '+TEAM_NAMES[s.turnTeam]+'.'+(can?' Tap a slip if it was not really guessed.':'')+'</p></div>'+
+    '<div class="list">'+list+'</div>'+scoreStrip()+'<div class="spacer"></div>'+
+    (can?'<button class="btn big" data-a="turnnext">'+(empty?'See round scores':'Next player')+'</button>':waitNote('Waiting for '+esc(giverName())+' to continue.'))+leaveLink();
+}
+
+function vRoundEnd(){
+  var s=st(),r=s.round,rows='';
+  for(var t=0;t<s.settings.teams;t++){
+    rows+='<div style="--tc:'+TEAM_COLORS[t]+'"><span>'+TEAM_NAMES[t]+'</span><b>'+s.scores[r-1][t]+'</b></div>';
+  }
+  return '<div class="hero"><p class="eyebrow">Round '+r+' of 3 is done</p><h1>'+ROUNDS[r-1].name+' scores</h1></div>'+
+    '<div class="score">'+rows+'</div>'+
+    '<div class="card"><p class="sub">Totals so far</p>'+scoreStrip()+
+    (s.carry&&r<3?'<p class="sub">'+s.carry+' seconds were left, so '+(iAmGiver()?'you keep':esc(giverName())+' keeps')+' going in the next round.</p>':'')+'</div>'+
+    '<div class="spacer"></div>'+
+    (isHost()?'<button class="btn big" data-a="nextround">'+(r<3?'On to round '+(r+1):'Final result')+'</button>':waitNote('Waiting for the host.'))+leaveLink();
+}
+
+function vFinal(){
+  var s=st(),n=s.settings.teams,tot=[],best=-1,t;
+  for(t=0;t<n;t++){tot[t]=total(t);if(tot[t]>best)best=tot[t];}
+  var winners=[];
+  for(t=0;t<n;t++){if(tot[t]===best)winners.push(t);}
+  var head=winners.length===1?TEAM_NAMES[winners[0]]+' win':'Dead heat';
+  var sub=winners.length===1?best+' slips across all three rounds.':winners.map(function(i){return TEAM_NAMES[i];}).join(' and ')+' tied on '+best+'.';
+  var th='<tr><th></th>';
+  for(t=0;t<n;t++)th+='<th style="color:'+TEAM_COLORS[t]+'">'+TEAM_NAMES[t]+'</th>';
+  th+='</tr>';
+  var body='';
+  for(var r=0;r<3;r++){
+    body+='<tr><td>'+ROUNDS[r].name+'</td>';
+    for(t=0;t<n;t++)body+='<td>'+s.scores[r][t]+'</td>';
+    body+='</tr>';
+  }
+  var foot='<tr><td>Total</td>';
+  for(t=0;t<n;t++)foot+='<td'+(tot[t]===best?' class="win"':'')+'>'+tot[t]+'</td>';
+  foot+='</tr>';
+  return '<div class="hero"><p class="eyebrow">Final result</p><h1>'+head+'</h1><p class="sub">'+sub+'</p></div>'+
+    '<div class="card"><table class="table"><thead>'+th+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>'+
+    '<div class="spacer"></div>'+
+    (isHost()?'<button class="btn big" data-a="again">Same slips, again</button><button class="btn ghost" data-a="newgame">New game, new slips</button>':waitNote('Waiting for the host to pick what is next.'))+leaveLink();
+}
+
+/* ---------- render ---------- */
+function buildHtml(){
+  if(G.view==='home')return vHome();
+  var h='';
+  switch(st().phase){
+    case 'lobby':h=vLobby();break;
+    case 'entry':h=vEntry();break;
+    case 'rules':h=vRules();break;
+    case 'turnintro':h=vIntro();break;
+    case 'turn':h=st().turn?vTurn():'';break;
+    case 'turnend':h=st().turn?vTurnEnd():'';break;
+    case 'roundend':h=vRoundEnd();break;
+    case 'final':h=vFinal();break;
+  }
+  return (G.online?'':'<div class="netbad" role="status">Reconnecting&hellip;</div>')+h;
+}
+function screenKey(){return G.view==='home'?'home':'room-'+(G.room?st().phase:'');}
+
+function paint(force){
+  var sig=G.view+'|'+G.online+'|'+G.busy+'|'+G.err+'|'+(G.savedRoom?G.savedRoom.code:'');
+  if(G.view==='room'&&G.room){
+    sig+='|'+JSON.stringify([G.room,G.players,G.slips.map(function(x){return [x.id,x.text!=null];})]);
+  }
+  if(!force&&sig===G.lastSig)return;
+  G.lastSig=sig;
+  var key=screenKey(),keyChanged=key!==G.lastKey;
+  /* sounds and wake lock on phase changes, for every phone */
+  if(G.view==='room'&&G.room){
+    var ph=st().phase;
+    if(ph!==G.lastPhase){
+      if(ph==='turn'&&G.lastPhase!=='turn'){tone(520,0.08);G.lastSec=null;if(iAmGiver())takeLock();}
+      if(G.lastPhase==='turn'&&ph==='turnend'){tone(330,0.5);if(iAmGiver())buzz();releaseLock();}
+      G.lastPhase=ph;
+    }
+  }
+  var ae=document.activeElement,keep=null;
+  if(ae&&ae.tagName==='INPUT'&&ae.id){keep={id:ae.id,v:ae.value,s:ae.selectionStart,e:ae.selectionEnd};}
+  app.innerHTML=buildHtml();
+  var fid=G.focusId||(keep&&keep.id);
+  if(keep){
+    var el=document.getElementById(keep.id);
+    if(el&&!el.disabled){el.value=keep.v;}
+  }
+  if(fid){
+    var f=document.getElementById(fid);
+    if(f&&!f.disabled){
+      f.focus();
+      if(keep&&keep.id===fid){try{f.setSelectionRange(keep.s,keep.e);}catch(e){}}
+    }
+  }
+  G.focusId=null;
+  if(keyChanged){G.lastKey=key;window.scrollTo(0,0);}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');
+  if(!b||b.disabled)return;
+  var fn=actions[b.getAttribute('data-a')];
+  if(fn)fn(b.dataset);
+});
+document.addEventListener('input',function(e){
+  var id=e.target.id;
+  if(id==='nameIn'||id==='codeIn'||id==='slipin'){
+    var v=e.target.value;
+    if(id==='codeIn'){v=v.toUpperCase().replace(/[^A-Z]/g,'');e.target.value=v;}
+    G.draft[id]=v;
+  }
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;
+  var id=e.target.id;
+  if(id==='slipin'){e.preventDefault();addSlip();}
+  else if(id==='codeIn'){e.preventDefault();joinRoom();}
+  else if(id==='nameIn'){e.preventDefault();if(G.draft.codeIn&&G.draft.codeIn.length===4)joinRoom();else createRoom();}
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&G.view==='room'){syncTime();refresh();}
+});
+
+/* the clock runs on every phone from the same server timeline */
+setInterval(function(){
+  if(G.view!=='room'||!G.room)return;
+  var s=st();
+  if(s.phase!=='turn'||!s.turn)return;
+  var t=s.turn;
+  var left=t.paused?t.pauseLeft:t.endsAt-nowS();
+  var sec=Math.max(0,Math.ceil(left/1000));
+  var n=document.getElementById('tnum'),b=document.getElementById('tbar');
+  if(n){n.textContent=sec;n.classList.toggle('low',sec<=10);}
+  if(b)b.style.width=Math.max(0,Math.min(100,left/t.total*100))+'%';
+  if(t.paused)return;
+  if(sec!==G.lastSec){G.lastSec=sec;if(sec>0&&sec<=3)tone(660,0.08);}
+  if(left<=0&&iAmGiver())endTurn('time');
+  else if(left<=-2500&&isHost())endTurn('time');
+},200);
+setInterval(function(){if(G.view==='room'&&document.visibilityState==='visible')refresh();},3000);
+setInterval(function(){if(G.view==='room')syncTime();},120000);
+
+/* ---------- boot ---------- */
+if(!sb){G.err='Could not load the game server. Check your connection and reload.';}
+paint(true);
+if(sb&&G.savedRoom&&(!urlRoom||urlRoom===G.savedRoom.code)){
+  G.busy=true;paint(true);
+  enterRoom(G.savedRoom.code,G.savedRoom.id,G.savedRoom.name).then(function(){G.busy=false;paint(true);});
+}
+})();
+</script>
+</body>
+</html>
